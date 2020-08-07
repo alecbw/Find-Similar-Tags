@@ -78,6 +78,10 @@ if __name__ == "__main__":
     tag_pairs = find_similar_pairs(tags, required_similarity=80)
 
     for t1, t2 in tag_pairs:
+        if t1 in already_tagged or t2 in already_tagged:
+            print("Already tagged; skipping")
+            continue
+
         counter += 1
 
         t1_index: tags.index(t1)
@@ -86,10 +90,10 @@ if __name__ == "__main__":
         t2_count = int(output_lod[t2_index]["Count"])
 
         if t1_count >= t2_count:
-            preferable_tag = t1
+            preferable_tag, discarded_tag = t1, t2
             message = f" {t1} ({t1_count}) for {t2} ({t2_count})"
         else:
-            preferable_tag = t2
+            preferable_tag, discarded_tag = t2, t1
             message = f" {t2} ({t2_count}) for {t1} ({t1_count})"
 
 
@@ -102,34 +106,14 @@ if __name__ == "__main__":
         if not approval:
             preferable_tag = ""
         elif approval == "alt":
-            preferable_tag = t2 if preferable_tag == t1 else t1
+            preferable_tag, discarded_tag = discarded_tag, preferable_tag
 
         output_lod[t1_index]["Applied_Tag"] = preferable_tag
         output_lod[t2_index]["Applied_Tag"] = preferable_tag
-
+        already_tagged.append(discarded_tag)
 
         if counter != 0 and counter % 25 == 0:
             write_output_csv("Output " + filename, output_lod, output_headers)
 
-        # print (
-        #     t1,
-        #     ,
-        #     t2,
-        #     output_lod[tags.index(t2)]["Count"]
-        # )
-        # print(t1, t2)
-        # print (tags.index(t1))
-        # print(])
-
-    print (counter)
     write_output_csv("Output " + filename, output_lod, output_headers)
 
-            # message = f" {higher_count} ({input_lod[tags.index(higher_count)]['Count']}) for {lower_count} ({input_lod[tags.index(lower_count)]['Count']})"
-
-            # t1_count = input_lod[]["Count"]
-        # t2_count = input_lod[tags.index(t2)]["Count"]
-        # print (t1_count, t2_count, t1_count >= t2_count)
-        # print (type(t1_count), type(t2_count), t1_count >= t2_count)
-        # higher_count = t1 if t1_count >= t2_count else t2
-        # lower_count = t2 if higher_count == t1 else t1
-        # print(higher_count)
