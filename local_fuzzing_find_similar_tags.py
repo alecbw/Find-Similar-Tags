@@ -65,7 +65,9 @@ def find_similar_pairs(tags, *, required_similarity=80):
 
 
 if __name__ == "__main__":
-    filename = "ss_3_tag_categories_to_fuzz_8.6.csv"
+    filename = "ss_4_tag_categories_to_fuzz_8.6.csv"
+    similarity = 60
+
     input_lod = read_input_csv(filename, columns=["Tag", "Count"])
 
     output_lod = [x for x in input_lod if x.get("Tag") and x.get("Count")] # throw out empty rows
@@ -75,7 +77,7 @@ if __name__ == "__main__":
 
     counter = 0
     already_tagged = []
-    tag_pairs = find_similar_pairs(tags, required_similarity=80)
+    tag_pairs = find_similar_pairs(tags, required_similarity=similarity)
 
     for t1, t2 in tag_pairs:
         if t1 in already_tagged or t2 in already_tagged:
@@ -84,8 +86,8 @@ if __name__ == "__main__":
 
         counter += 1
 
-        t1_index: tags.index(t1)
-        t2_index: tags.index(t2)
+        t1_index = tags.index(t1)
+        t2_index = tags.index(t2)
         t1_count = int(output_lod[t1_index]["Count"])
         t2_count = int(output_lod[t2_index]["Count"])
 
@@ -104,7 +106,7 @@ if __name__ == "__main__":
 
         approval = allow_user_to_deny_matching(message)
         if not approval:
-            preferable_tag = ""
+            continue
         elif approval == "alt":
             preferable_tag, discarded_tag = discarded_tag, preferable_tag
 
@@ -115,5 +117,6 @@ if __name__ == "__main__":
         if counter != 0 and counter % 25 == 0:
             write_output_csv("Output " + filename, output_lod, output_headers)
 
+    print(f"Count of pairings assessed: {counter}")
     write_output_csv("Output " + filename, output_lod, output_headers)
 
