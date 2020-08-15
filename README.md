@@ -29,7 +29,7 @@ python3 local_fuzzing_find_similar_tags.py
 
 The script will find pairings among the provided tags and give you the option via the prompt to pick which tag should apply to both
 
-There are a set of charactesr that correspond to each choice. They were picked by ergonomic convenience, not because the letters mean anything:
+There are a set of characters that correspond to each choice. They were picked by ergonomic convenience, not because the letters mean anything:
 
 * ["No", "no", "N", "n", "M", "m"] - apply neither tag
 * ["k", "K", "l", "L"] - apply the less frequent (second) tag to both
