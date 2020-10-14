@@ -1,8 +1,8 @@
 import itertools
 import csv
 
-from rapidfuzz import fuzz
 import inquirer
+from rapidfuzz import fuzz
 
 def write_output_csv(filename, output_lod, headers):
     filename = filename + ".csv" if ".csv" not in filename else filename
@@ -65,7 +65,7 @@ def find_similar_pairs(tags, *, required_similarity=80):
 
 
 if __name__ == "__main__":
-    filename = "ss_4_tag_categories_to_fuzz_8.6.csv"
+    filename = "ss_tag_categories_to_fuzz_8.6.csv"
     similarity = 60
 
     input_lod = read_input_csv(filename, columns=["Tag", "Count"])
