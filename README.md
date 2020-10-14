@@ -1,5 +1,4 @@
 # Find-Similar-Tags
-# GPT3-Create-Glossary-Definitions
 
 A wrapper with interactive CLI that provides a way to replace duplicate, variation, and misspelled permutations of tags with the correct tags
 
