@@ -1,5 +1,6 @@
 import itertools
 import csv
+import sys
 
 import inquirer
 from rapidfuzz import fuzz
@@ -25,8 +26,8 @@ def read_input_csv(filename, **kwargs):
     if kwargs.get("columns") and any(x for x in kwargs["columns"] if x not in file_lod[0].keys()):
         sys.exit(f"Exiting. Your CSV needs to have these columns: {kwargs['columns']}")
 
-    if kwargs.get("start_at"):
-        file_lod = file_lod[kwargs["start_at"]:]
+    if kwargs.get("start_row"):
+        file_lod = file_lod[kwargs["start_row"]:]
 
     if kwargs.get("url_column"):
         file_lol = [x[kwargs["url_column"]] for x in file_lod if is_url(x[kwargs["url_column"]])] # throw out empty cells
@@ -64,15 +65,75 @@ def find_similar_pairs(tags, *, required_similarity=80):
             yield (t1, t2)
 
 
+def fuzzy_match_with_counts(output_lod, already_tagged, t1, t2, t1_index, t2_index):
+    t1_count = int(output_lod[t1_index]["Count"])
+    t2_count = int(output_lod[t2_index]["Count"])
+
+    if t1_count >= t2_count:
+        preferable_tag, discarded_tag = t1, t2
+        message = f" {t1} ({t1_count}) for {t2} ({t2_count})"
+    else:
+        preferable_tag, discarded_tag = t2, t1
+        message = f" {t2} ({t2_count}) for {t1} ({t1_count})"
+
+    if t1.lower().strip() == t2.lower().strip():
+        print("the only difference was casing")
+        output_lod[t1_index]["Applied_Tag"] = preferable_tag
+        output_lod[t2_index]["Applied_Tag"] = preferable_tag
+
+    approval = allow_user_to_deny_matching(message)
+    if not approval:
+        return output_lod
+    elif approval == "alt":
+        preferable_tag, discarded_tag = discarded_tag, preferable_tag
+
+    output_lod[t1_index]["Applied_Tag"] = preferable_tag
+    output_lod[t2_index]["Applied_Tag"] = preferable_tag
+    already_tagged.append(discarded_tag)
+
+    return output_lod, already_tagged
+
+def fuzzy_match_basic(output_lod, already_tagged, t1, t2, t1_index, t2_index):
+
+    message = f" {t2} <> {t1}"
+    if t1 == t2:
+        message += " - they are exactly the same"
+    elif t1.lower() == t2.lower():
+        message += " - they are cased differently"
+    elif t1.strip() == t2.strip():
+        message += " - they are spaced differently"
+    elif t1.lower().strip() == t2.lower().strip():
+        message += " - they are both cased differently and spaced differently"
+
+    approval = allow_user_to_deny_matching(message)
+
+    if approval:
+        output_lod[t1_index]['message'] = message
+        output_lod[t1_index]['Applied_Tag'] = t2
+        already_tagged.append(discarded_tag)
+
+    return output_lod, already_tagged
+
+
+
+
+
 if __name__ == "__main__":
-    filename = "your_filename.csv"
-    similarity = 60
+    filename = "SS Tags - 3.25.21 Post MDD.csv"
+    similarity = 85
+    TAG_COL = "product_name"
+    COUNT_COL = None
+    columns = [TAG_COL, COUNT_COL] if COUNT_COL else [TAG_COL]
+    START_ROW = 1990
 
-    input_lod = read_input_csv(filename, columns=["Tag", "Count"])
+    input_lod = read_input_csv(filename, columns=columns, start_row=START_ROW) #, "Count"
 
-    output_lod = [x for x in input_lod if x.get("Tag") and x.get("Count")] # throw out empty rows
+    output_lod = [x for x in input_lod if x.get(TAG_COL)] # throw out empty rows
+    if COUNT_COL:
+         output_lod = [x for x in input_lod if x.get("Count")]
+
     output_headers = list(output_lod[0].keys()) + ["Applied_Tag"]
-    tags = [x.get("Tag") for x in output_lod]
+    tags = [x.get(TAG_COL) for x in output_lod]
 
 
     counter = 0
@@ -88,35 +149,21 @@ if __name__ == "__main__":
 
         t1_index = tags.index(t1)
         t2_index = tags.index(t2)
-        t1_count = int(output_lod[t1_index]["Count"])
-        t2_count = int(output_lod[t2_index]["Count"])
 
-        if t1_count >= t2_count:
-            preferable_tag, discarded_tag = t1, t2
-            message = f" {t1} ({t1_count}) for {t2} ({t2_count})"
+        if COUNT_COL:
+            output_lod, already_tagged = fuzzy_match_with_counts(output_lod, already_tagged, t1, t2, t1_index, t2_index)
         else:
-            preferable_tag, discarded_tag = t2, t1
-            message = f" {t2} ({t2_count}) for {t1} ({t1_count})"
+            output_lod, already_tagged = fuzzy_match_basic(output_lod, already_tagged, t1, t2, t1_index, t2_index)
 
-
-        if t1.lower().strip() == t2.lower().strip():
-            print("the only difference was casing")
-            output_lod[t1_index]["Applied_Tag"] = preferable_tag
-            output_lod[t2_index]["Applied_Tag"] = preferable_tag
-
-        approval = allow_user_to_deny_matching(message)
-        if not approval:
-            continue
-        elif approval == "alt":
-            preferable_tag, discarded_tag = discarded_tag, preferable_tag
-
-        output_lod[t1_index]["Applied_Tag"] = preferable_tag
-        output_lod[t2_index]["Applied_Tag"] = preferable_tag
-        already_tagged.append(discarded_tag)
 
         if counter != 0 and counter % 25 == 0:
+            print(f"Now on row number {t1_index}")
             write_output_csv("Output " + filename, output_lod, output_headers)
 
     print(f"Count of pairings assessed: {counter}")
+
+    if not COUNT_COL:
+        output_headers.append("message")
+
     write_output_csv("Output " + filename, output_lod, output_headers)
 
