@@ -53,7 +53,7 @@ def allow_user_to_deny_matching(message):
 
 
 # 90 -> different suffixes, pluralizing, etc
-# 80 - pretty close concepts, some false positives (ebay integrationa dn Xero integration)
+# 80 - pretty close concepts, some false positives (eg ebay integration and Xero integration)
 def find_similar_pairs(tags, *, required_similarity=80):
     """
     Find pairs of similar-looking tags in the collection ``tags``.
@@ -119,9 +119,9 @@ def fuzzy_match_basic(output_lod, already_tagged, t1, t2, t1_index, t2_index):
 
 
 if __name__ == "__main__":
-    filename = "SS Tags - 3.25.21 Post MDD.csv"
+    filename = ""
     similarity = 85
-    TAG_COL = "product_name"
+    TAG_COL = ""
     COUNT_COL = None
     columns = [TAG_COL, COUNT_COL] if COUNT_COL else [TAG_COL]
     START_ROW = 1990
